@@ -8,17 +8,14 @@ import random
 import string
 import tempfile
 import warnings
-
 from collections import namedtuple
+
 from libraw.bindings import LibRaw
 from libraw.errors import raise_if_error
-
-from rawkit.errors import InvalidFileType
-from rawkit.errors import NoFileSpecified
+from rawkit.errors import InvalidFileType, NoFileSpecified
 from rawkit.metadata import Metadata
 from rawkit.options import Options
 from rawkit.orientation import get_orientation
-
 
 output_file_types = namedtuple(
     'OutputFileType', ['ppm', 'tiff']
@@ -70,7 +67,11 @@ class Raw(object):
             raise NoFileSpecified()
         self.libraw = LibRaw()
         self.data = self.libraw.libraw_init(0)
-        self.libraw.libraw_open_file(self.data, filename.encode('ascii'))
+        if hasattr(filename, 'read'):
+            self.bytes = filename.read()
+            self.libraw.libraw_open_buffer(self.data, self.bytes, len(self.bytes))
+        else:
+            self.libraw.libraw_open_file(self.data, filename.encode('ascii'))
 
         self.options = Options()
 
